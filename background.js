@@ -9,9 +9,11 @@ const blockedwebsites = [
 let blocked = false;
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
   if (changeInfo.status == "complete") {
+    blocked = false;
     blockedwebsites.forEach((ele) => {
       if (tab.url.toString().includes(ele)) {
         blocked = true;
+        returnl;
       }
     });
   }
