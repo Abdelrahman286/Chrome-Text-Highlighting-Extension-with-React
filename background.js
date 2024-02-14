@@ -13,7 +13,7 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
     blockedwebsites.forEach((ele) => {
       if (tab.url.toString().includes(ele)) {
         blocked = true;
-        returnl;
+        return;
       }
     });
   }
