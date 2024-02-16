@@ -1,25 +1,10 @@
 if (typeof initExtension == "undefined") {
   function initExtension() {
-    const highlightingPallete = [
-      { name: "white", value: "white" },
-      { name: "black", value: "black" },
-      { name: "red", value: "#ff0000" },
-      { name: "green", value: "#f8ff00" },
-      { name: "blue", value: "#a41a1a" },
-      { name: "yellow", value: "#10ff00" },
-      { name: "purple", value: "#00ffd9" },
-    ];
-
-    const fontPallete = [
-      { name: "white", value: "white" },
-      { name: "black", value: "black" },
-    ];
-
     function _el(selector) {
       return document.querySelector(selector);
     }
-
-    async function saveHighlights(text, url, uuid) {
+    // save highlights
+    function saveHighlights(text, url, uuid) {
       // schema
       const obj = new Object();
       const currentDate = Date.now();
@@ -28,139 +13,13 @@ if (typeof initExtension == "undefined") {
         url: url,
         date: currentDate,
       };
-
-      await chrome.storage.local.set(obj);
-    }
-
-    const shadowRootElementStyle = `
-<style>
-:root {
---main-bg-color: #313337;
-}
-
-.myspan {
-/* color: yellow; */
-background: #00ffd9;
-/* text-decoration: line-through; */
-cursor: pointer;
-padding: 0 4px;
-}
-
-button {
-user-select: none;
-}
-
-body {
-/* position: relative; */
-/* we disabled it because of youtube fullscreen player  */
-}
-
-.control-box {
-/* border: 2px dashed blue; */
-background-color: var(--main-bg-color);
-position: absolute;
-z-index: 100000;
-padding: 5px;
-display: block;
-border-radius: 15px;
-/* width: 260px; */
-}
-
-.show {
-display: block;
-}
-
-.arrow-up-icon {
-width: 0px;
-height: 0px;
-/* background: red; */
-border-left: 15px solid transparent;
-border-right: 15px solid transparent;
-border-bottom: 15px solid var(--main-bg-color);
-display: block;
-}
-
-.unwrap-btn {
-padding: 3px 10px;
-margin: 4px 0px;
-}
-
-.close-btn {
-margin-left: 10px;
-float: right;
-
-}
-
-.highlight-option {
-width: 30px;
-height: 30px;
-border-radius: 50%;
-margin: 0 3px;
-border: none;
-}
-
-.highlight-option:focus {
-border: 2px solid white;
-}
-
-.highlight-icon,
-.font-icon {
-padding: 2px;
-width: 20px;
-
-overflow: hidden;
-}
-
-.highlight-icon img,
-.font-icon img {
-width: 100%;
-}
-textarea {
-width : 150px;
-}
-
-.highlighting-section , .font-section {
-
-display: flex;
-margin-top : 10px;
-
-
-}
-
-.unwrap-section {
-border-bottom : 1px solid gray;
-}
-
-.notes-section {
-
-padding : 3px;
-display: flex;
-justify-content : space-between;
-}
-.notes-section textarea {
-width : 200px;
-height: 50px;
-margin : 0 4px;
-}
-
-.notes-section select {
-align-self: end;  
-padding : 4px;
-}
-</style>`;
-
-    function unwrap(el) {
-      const pp = el.parentNode;
-      if (el && el.parentNode) {
-        while (el.firstChild) {
-          el.parentNode.insertBefore(el.firstChild, el);
-        }
-        el.remove();
-        pp.normalize();
+      if (chrome.storage) {
+        chrome.storage.local.set(obj).then(() => {
+          console.log("text saved ");
+        });
       }
     }
 
-    // GLOBAL VARIABLES
     let selObj = undefined;
     let range = undefined;
     let controlBoxIsShown = false;
@@ -174,7 +33,93 @@ padding : 4px;
       mode: "closed",
     });
 
-    myNewRoot.innerHTML = shadowRootElementStyle;
+    myNewRoot.innerHTML = `
+        <style>
+        :root {
+          --main-bg-color: #313337;
+        }
+        
+        .myspan {
+          /* color: yellow; */
+          background: #00ffd9;
+          /* text-decoration: line-through; */
+          cursor: pointer;
+          padding: 0 4px;
+        }
+        
+        button {
+          user-select: none;
+        }
+        
+        body {
+          /* position: relative; */
+          /* we disabled it because of youtube fullscreen player  */
+        }
+        
+        .control-box {
+          /* border: 2px dashed blue; */
+          background-color: var(--main-bg-color);
+          position: absolute;
+          z-index: 100000;
+          padding: 5px;
+          display: block;
+          border-radius: 15px;
+          /* width: 260px; */
+        }
+        
+        .show {
+          display: block;
+        }
+        
+        .arrow-up-icon {
+          width: 0px;
+          height: 0px;
+          /* background: red; */
+          border-left: 15px solid transparent;
+          border-right: 15px solid transparent;
+          border-bottom: 15px solid var(--main-bg-color);
+          display: block;
+        }
+        
+        .unwrap-btn {
+          padding: 3px 10px;
+          margin: 4px 0px;
+        }
+        
+        .close-btn {
+          margin-left: auto;
+          float: right;
+        }
+        
+        .highlight-option {
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          margin: 0 3px;
+          border: none;
+        }
+        
+        .highlight-option:focus {
+          border: 2px solid white;
+        }
+        
+        .highlight-icon,
+        .font-icon {
+          padding: 2px;
+          width: 20px;
+        
+          overflow: hidden;
+        }
+        
+        .highlight-icon img,
+        .font-icon img {
+          width: 100%;
+        }
+        textarea {
+          width : 150px;
+        }
+
+      </style>`;
 
     // adding highlight image
     const highlightImg = document.createElement("img");
@@ -183,15 +128,29 @@ padding : 4px;
     const fontImg = document.createElement("img");
     fontImg.src = chrome.runtime.getURL("text.png");
 
-    // CONTROL BOX COMPONENT
+    function unwrap(el) {
+      const pp = el.parentNode;
+      if (el && el.parentNode) {
+        while (el.firstChild) {
+          el.parentNode.insertBefore(el.firstChild, el);
+        }
+        el.remove();
+        pp.normalize();
+      }
+    }
 
-    function createControlBox(
-      posX,
-      posY,
-      highlightingPallete,
-      pageBody,
-      currentSelect
-    ) {
+    // add colors dynamically
+    const pallete = [
+      { name: "white", value: "white" },
+      { name: "black", value: "black" },
+      { name: "red", value: "#ff0000" },
+      { name: "green", value: "#f8ff00" },
+      { name: "blue", value: "#a41a1a" },
+      { name: "yellow", value: "#10ff00" },
+      { name: "purple", value: "#00ffd9" },
+    ];
+
+    function createControlBox(posX, posY, pallete, pageBody, currentSelect) {
       const controlBox = document.createElement("div");
       controlBox.classList.add("control-box");
       controlBox.style.width = CONTROL_BOX_WIDTH;
@@ -224,60 +183,48 @@ padding : 4px;
         controlBoxIsShown = false;
       });
 
-      //-------------- Highlighting section -------------------------------
-      const highlightingSection = document.createElement("div");
-      highlightingSection.classList.add("highlighting-section");
-
       const highlightIcon = document.createElement("div");
       highlightIcon.classList.add("highlight-icon");
       highlightIcon.appendChild(highlightImg);
-      highlightingSection.appendChild(highlightIcon);
-      highlightingPallete.forEach((ele) => {
+      controlBox.appendChild(highlightIcon);
+      pallete.forEach((ele) => {
         const name = ele.name;
         const value = ele.value;
         const btn = document.createElement("button");
         btn.classList.add("highlight-option");
         btn.style.background = value;
-        highlightingSection.appendChild(btn);
+        controlBox.appendChild(btn);
         btn.addEventListener("click", (e) => {
           // e.stopPropagation();
           currentSelect.style.background = value;
         });
       });
-
-      controlBox.appendChild(highlightingSection);
-
-      //---------------- FONT SECTION ---------------------------
-      const fontSection = document.createElement("div");
-      fontSection.classList.add("font-section");
       const fontIcon = document.createElement("div");
       fontIcon.classList.add("font-icon");
       fontIcon.appendChild(fontImg);
-      fontSection.appendChild(fontIcon);
+      controlBox.appendChild(fontIcon);
       // ------ font-color
-      fontPallete.forEach((ele) => {
+      pallete.forEach((ele) => {
         const name = ele.name;
         const value = ele.value;
         const btn = document.createElement("button");
         btn.style.background = value;
         btn.classList.add("highlight-option");
-        fontSection.appendChild(btn);
+        controlBox.appendChild(btn);
         btn.addEventListener("click", (e) => {
           // e.stopPropagation();
           currentSelect.style.color = value;
         });
       });
 
-      controlBox.appendChild(fontSection);
-
-      //----------- Unwrap section ------------------------
-      const unwrapSection = document.createElement("div");
-      unwrapSection.classList.add("unwrap-section");
+      // insert line
+      const line3 = document.createElement("br");
+      controlBox.appendChild(line3);
       // unwrap button
       const unwrapBtn = document.createElement("button");
       unwrapBtn.innerText = "🚫";
       unwrapBtn.classList.add("unwrap-btn");
-      unwrapSection.appendChild(unwrapBtn);
+      controlBox.appendChild(unwrapBtn);
 
       unwrapBtn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -286,7 +233,7 @@ padding : 4px;
         const allfragments = document.querySelectorAll(
           `span[data-uuid="${fragUUID}"]`
         );
-
+        // console.log(allfragments.length);
         if (allfragments.length == 1) {
           unwrap(currentSelect);
         } else {
@@ -304,15 +251,13 @@ padding : 4px;
         }
       });
 
-      controlBox.appendChild(unwrapSection);
+      const line4 = document.createElement("hr");
+      controlBox.appendChild(line4);
 
-      //--------------------- NOTES Section -----------------
-      const notesSection = document.createElement("div");
-      notesSection.classList.add("notes-section");
+      //--------------------- textarea-----------------
       const textarea = document.createElement("textarea");
-      textarea.placeholder = "Write Some Notes...";
-      // textarea.value = currentSelect.dataset.notes;
-      notesSection.appendChild(textarea);
+      textarea.value = currentSelect.dataset.notes;
+      controlBox.appendChild(textarea);
       textarea.addEventListener("click", (e) => {
         // e.stopPropagation();
       });
@@ -327,15 +272,15 @@ padding : 4px;
       option1.value = "folder 1";
       option1.textContent = "folder 1";
       folderOptions.appendChild(option1);
-      notesSection.appendChild(folderOptions);
+      controlBox.appendChild(folderOptions);
 
       folderOptions.addEventListener("change", () => {
         console.log(folderOptions.value);
       });
-
-      controlBox.appendChild(notesSection);
       myNewRoot.appendChild(controlBox);
     }
+
+    //------------ folder options
 
     document.addEventListener("mouseup", (e) => {
       selObj = document.getSelection();
@@ -356,59 +301,75 @@ padding : 4px;
         if (range) {
           const isSafeRange = range.startContainer === range.endContainer;
 
-          if (isSafeRange && !range.collapsed) {
-            //-------- Stop it from adding new spans
-            if (range.startContainer.nodeName == "#text") {
-              saveHighlights(range.toString(), window.location.href, uuid);
-
-              range.surroundContents(wrapper_highlight);
-              selObj.removeAllRanges();
+          if (isSafeRange) {
+            if (!range.collapsed && isSafeRange) {
+              //-------- Stop it from adding new spans
+              if (range.startContainer.nodeName == "#text") {
+                range.surroundContents(wrapper_highlight);
+                selObj.removeAllRanges();
+                saveHighlights(range.toString(), window.location.href, uuid);
+              }
             }
           } else {
             // not safe range
             console.log("highlight bigger fragment");
-            handleBigRange(range, uuid);
+            let safeRanges = getSafeRanges(range);
+            // console.log(safeRanges)
+            for (let i = 0; i < safeRanges.length; i++) {
+              // surround element here
+              if (
+                !safeRanges[i].collapsed &&
+                range.startContainer.nodeName == "#text"
+              ) {
+                const newNode = document.createElement("span");
+                newNode.dataset.uuid = uuid;
+                newNode.classList.add("myspan");
+                newNode.dataset.notes = "Add Notes";
+                safeRanges[i].surroundContents(newNode);
+              }
+
+              // get text fragment & save it
+              const textFragment = getTextFrag(safeRanges);
+              console.log(textFragment);
+              saveHighlights(textFragment, window.location.href, uuid);
+              selObj.removeAllRanges();
+            }
           }
         }
       }
     });
 
-    function handleBigRange(range, uuid) {
-      let wholeTextFragments = "";
-      let safeRanges = getSafeRanges(range);
-      // console.log(safeRanges)
-      for (let i = 0; i < safeRanges.length; i++) {
-        if (
-          !safeRanges[i].collapsed &&
-          range.startContainer.nodeName == "#text" &&
-          range.endContainer.nodeName == "#text" &&
-          safeRanges[i].toString().match(/\w+/g) !== null
-        ) {
-          const newNode = document.createElement("span");
-          newNode.dataset.uuid = uuid;
-          newNode.classList.add("myspan");
-          newNode.dataset.notes = "Add Notes";
-          safeRanges[i].surroundContents(newNode);
-          wholeTextFragments += safeRanges[i].toString();
+    function getTextFrag(ranges) {
+      let t = "";
+      ranges.forEach((r) => {
+        if (r.toString()) {
+          t += r.toString();
         }
-      }
-
-      console.log(wholeTextFragments);
-      saveHighlights(wholeTextFragments, window.location.href, uuid);
-      selObj.removeAllRanges();
+      });
+      return t;
     }
 
-    // ------------------- THIS IS THE ONLY FUNCTION I STOLE
+    //---------------- Get safe range
     function getSafeRanges(dangerous) {
-      var a = dangerous.commonAncestorContainer;
+      var selectionParent = dangerous.commonAncestorContainer;
+
       // Starts -- Work inward from the start, selecting the largest safe range
+      // s --> start , rs ---> range start
       var s = new Array(0),
         rs = new Array(0);
-      if (dangerous.startContainer != a) {
-        for (var i = dangerous.startContainer; i != a; i = i.parentNode) {
+
+      if (dangerous.startContainer != selectionParent) {
+        // go up level in the tree by i.parentNode
+        for (
+          let i = dangerous.startContainer;
+          i != selectionParent;
+          i = i.parentNode
+        ) {
           s.push(i);
+          // i = textnode the contain 'one'
         }
       }
+
       if (s.length > 0) {
         for (var i = 0; i < s.length; i++) {
           var xs = document.createRange();
@@ -416,20 +377,29 @@ padding : 4px;
             xs.setStartAfter(s[i - 1]);
             xs.setEndAfter(s[i].lastChild);
           } else {
-            xs.setStart(s[i], dangerous.startOffset);
-            xs.setEndAfter(
-              s[i].nodeType == Node.TEXT_NODE ? s[i] : s[i].lastChild
-            );
+            if (s[i]) {
+              xs.setStart(s[i], dangerous.startOffset);
+              xs.setEndAfter(
+                s[i].nodeType == Node.TEXT_NODE ? s[i] : s[i].lastChild
+              );
+            }
           }
-          rs.push(xs);
+
+          if (xs.toString() !== "") {
+            rs.push(xs);
+          }
         }
       }
 
       // Ends -- basically the same code reversed
       var e = new Array(0),
         re = new Array(0);
-      if (dangerous.endContainer != a) {
-        for (var i = dangerous.endContainer; i != a; i = i.parentNode) {
+      if (dangerous.endContainer != selectionParent) {
+        for (
+          var i = dangerous.endContainer;
+          i != selectionParent;
+          i = i.parentNode
+        ) {
           e.push(i);
         }
       }
@@ -445,7 +415,9 @@ padding : 4px;
             );
             xe.setEnd(e[i], dangerous.endOffset);
           }
-          re.unshift(xe);
+          if (xe.toString() !== "") {
+            re.unshift(xe);
+          }
         }
       }
 
@@ -459,7 +431,9 @@ padding : 4px;
       }
 
       // Concat
-      rs.push(xm);
+      if (xm.toString() !== "") {
+        rs.push(xm);
+      }
       response = rs.concat(re);
 
       // Send to Console
@@ -469,12 +443,10 @@ padding : 4px;
     document.addEventListener("contextmenu", (e) => {
       if (e.target.classList.contains("myspan")) {
         e.preventDefault();
-
         const oldControlBox = document.querySelector(".control-box");
         if (oldControlBox) {
           oldControlBox.remove();
         }
-
         const boundingBox = e.target.getBoundingClientRect();
         let xpos =
           boundingBox.x + boundingBox.width / 2 - CONTROL_BOX_WIDTH / 2;
@@ -483,10 +455,8 @@ padding : 4px;
         }
         let ypos = boundingBox.bottom + boundingBox.height + window.scrollY;
 
-        // let ypos = boundingBox.bottom;
-
         if (!controlBoxIsShown) {
-          createControlBox(xpos, ypos, highlightingPallete, pageBody, e.target);
+          createControlBox(xpos, ypos, pallete, pageBody, e.target);
           controlBoxIsShown = true;
         }
       }

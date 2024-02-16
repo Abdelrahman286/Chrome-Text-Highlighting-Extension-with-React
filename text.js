@@ -29,7 +29,7 @@ if (typeof initExtension == "undefined") {
         date: currentDate,
       };
 
-      await chrome.storage.local.set(obj);
+      // await chrome.storage.local.set(obj);
     }
 
     const shadowRootElementStyle = `
@@ -178,10 +178,10 @@ padding : 4px;
 
     // adding highlight image
     const highlightImg = document.createElement("img");
-    highlightImg.src = chrome.runtime.getURL("highlighter.png");
+    // highlightImg.src = chrome.runtime.getURL("highlighter.png");
     // font icon img
     const fontImg = document.createElement("img");
-    fontImg.src = chrome.runtime.getURL("text.png");
+    // fontImg.src = chrome.runtime.getURL("text.png");
 
     // CONTROL BOX COMPONENT
 
@@ -286,7 +286,7 @@ padding : 4px;
         const allfragments = document.querySelectorAll(
           `span[data-uuid="${fragUUID}"]`
         );
-
+        // console.log(allfragments.length);
         if (allfragments.length == 1) {
           unwrap(currentSelect);
         } else {
@@ -378,6 +378,8 @@ padding : 4px;
       let safeRanges = getSafeRanges(range);
       // console.log(safeRanges)
       for (let i = 0; i < safeRanges.length; i++) {
+        // surround element here
+        // console.log(range);
         if (
           !safeRanges[i].collapsed &&
           range.startContainer.nodeName == "#text" &&
@@ -487,6 +489,7 @@ padding : 4px;
 
         if (!controlBoxIsShown) {
           createControlBox(xpos, ypos, highlightingPallete, pageBody, e.target);
+          console.log(ypos, xpos);
           controlBoxIsShown = true;
         }
       }
