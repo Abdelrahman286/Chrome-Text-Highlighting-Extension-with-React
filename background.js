@@ -41,3 +41,48 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
     }
   }
 });
+
+chrome.runtime.onInstalled.addListener(async (details) => {
+  // details.reason = install || update
+
+  // FOLDER INIT
+  const foldersList = await chrome.storage.sync.get(["Folders"]);
+  const foldersCount = Object.entries(foldersList).length;
+
+  if (foldersCount == 0) {
+    console.log("create 2 folders");
+
+    // 1st folder
+    const folder = new Object();
+    folder.name = "New Folder 1";
+    folder.content = [];
+
+    // 2nd folder
+    const folder2 = new Object();
+    folder2.name = "New Folder 2";
+    folder2.content = [];
+
+    await chrome.storage.sync.set({ Folders: [folder, folder2] });
+  }
+
+  // LAST USED SETTING INIT
+  // const LAST_USED_FONT_COLOR = await chrome.storage.sync.get([
+  //   "LAST_USED_FONT_COLOR",
+  // ]);
+
+  // const LAST_USED_BG_COLOR = await chrome.storage.sync.get([
+  //   "LAST_USED_BG_COLOR",
+  // ]);
+
+  // const LAST_USED_FOLDER = await chrome.storage.sync.get(["LAST_USED_FOLDER"]);
+
+  await chrome.storage.sync.set({ LAST_USED_FONT_COLOR: "black" });
+
+  await chrome.storage.sync.set({ LAST_USED_BG_COLOR: "yellow" });
+
+  await chrome.storage.sync.set({ LAST_USED_FOLDER: "0" });
+
+  let lastUsedBgColor = await chrome.storage.sync.get(["LAST_USED_FONT_COLOR"]);
+
+  // console.log(Object.entries(lastUsedBgColor)[0][1]);
+});

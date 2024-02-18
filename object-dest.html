@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+    <h1>Object destructureing</h1>
+
+
+
+    <script>
+        const ele = document.querySelector('h1');
+
+
+        //------------- from dataset to object 
+        // ele.dataset.color = 'red';
+        // ele.dataset.width = 10;
+
+        // const obj = {}
+
+        // for (const key in ele.dataset) {
+        //     if (key == 'color') {
+        //         console.log('shit')
+        //     } else {
+
+        //         console.log(key, ele.dataset[key])
+        //     }
+        // }
+
+        //--------------- from object to dataset
+        const obj = {
+            color: 'red',
+            width: 10
+        }
+
+        for (const key in obj) {
+            ele.dataset[key] = obj[key];
+        }
+
+        console.log(ele.dataset)
+    </script>
+</body>
+
+</html>

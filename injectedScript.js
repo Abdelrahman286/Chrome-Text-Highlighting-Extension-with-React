@@ -1,5 +1,138 @@
 if (typeof initExtension == "undefined") {
-  function initExtension() {
+  async function initExtension() {
+    // shadow root element
+    const shadowRootElementStyle = `
+    <style>
+    :root {
+    --main-bg-color: #313337;
+    }
+
+    .myspan {
+    /* color: yellow; */
+    background: #00ffd9;
+    /* text-decoration: line-through; */
+    cursor: pointer;
+    padding: 0 4px;
+    }
+
+    button {
+    user-select: none;
+    }
+
+    body {
+    /* position: relative; */
+    /* we disabled it because of youtube fullscreen player  */
+    }
+
+    .control-box {
+    /* border: 2px dashed blue; */
+    background-color: var(--main-bg-color);
+    position: absolute;
+    z-index: 100000;
+    padding: 5px;
+    display: block;
+    border-radius: 15px;
+    /* width: 260px; */
+    }
+
+    .show {
+    display: block;
+    }
+
+    .arrow-up-icon {
+    width: 0px;
+    height: 0px;
+    /* background: red; */
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-bottom: 15px solid var(--main-bg-color);
+    display: block;
+    }
+
+    .unwrap-btn {
+    padding: 3px 10px;
+    margin: 4px 0px;
+    }
+
+    .close-btn {
+    margin-left: 10px;
+    float: right;
+
+    }
+
+    .highlight-option {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin: 0 3px;
+    border: none;
+    }
+
+    .highlight-option:focus {
+    border: 2px solid white;
+    }
+
+    .highlight-icon,
+    .font-icon {
+    padding: 2px;
+    width: 20px;
+
+    overflow: hidden;
+    }
+
+    .highlight-icon img,
+    .font-icon img {
+    width: 100%;
+    }
+    textarea {
+    width : 150px;
+    }
+
+    .highlighting-section , .font-section {
+
+    display: flex;
+    margin-top : 10px;
+
+
+    }
+
+    .unwrap-section {
+    border-bottom : 1px solid gray;
+    }
+
+    .notes-section {
+
+    padding : 3px;
+    display: flex;
+    justify-content : space-between;
+    }
+    .notes-section textarea {
+    width : 200px;
+    height: 50px;
+    margin : 0 4px;
+    }
+
+    .notes-section select {
+    align-self: end;  
+    padding : 4px;
+    }
+    </style>`;
+
+    // GLOBAL VARIABLES
+    let selObj = undefined;
+    let range = undefined;
+    let controlBoxIsShown = false;
+    const CONTROL_BOX_WIDTH = 200;
+    const pageBody = _el("body");
+    const shadowRootContainer = document.createElement("div");
+    shadowRootContainer.classList.add("shadow-root-container");
+    pageBody.insertBefore(shadowRootContainer, pageBody.firstChild);
+    const myNewRoot = shadowRootContainer.attachShadow({
+      mode: "closed",
+    });
+    myNewRoot.innerHTML = shadowRootElementStyle;
+
+    // colors
     const highlightingPallete = [
       { name: "white", value: "white" },
       { name: "black", value: "black" },
@@ -15,139 +148,116 @@ if (typeof initExtension == "undefined") {
       { name: "black", value: "black" },
     ];
 
+    // adding highlight image
+    const highlightImg = document.createElement("img");
+    highlightImg.src = chrome.runtime.getURL("highlighter.png");
+    const fontImg = document.createElement("img");
+    fontImg.src = chrome.runtime.getURL("text.png");
+
+    // LAST USED CONFIG
+    const lastUsedFontColorObj = await chrome.storage.sync.get([
+      "LAST_USED_FONT_COLOR",
+    ]);
+
+    const lastUsedBgColorObj = await chrome.storage.sync.get([
+      "LAST_USED_BG_COLOR",
+    ]);
+
+    let lastUsedBgColor = Object.entries(lastUsedBgColorObj)[0][1];
+    let lastUsedFontColor = Object.entries(lastUsedFontColorObj)[0][1];
+
+    console.log(lastUsedBgColor, lastUsedFontColor);
+
+    async function updateLastUsedBgColor(color) {
+      await chrome.storage.sync.set({ LAST_USED_BG_COLOR: color });
+    }
+
+    async function updateLastUsedFontColor(color) {
+      await chrome.storage.sync.set({ LAST_USED_FONT_COLOR: color });
+    }
+
     function _el(selector) {
       return document.querySelector(selector);
     }
 
-    async function saveHighlights(text, url, uuid) {
+    async function saveHighlights(
+      text,
+      url,
+      uuid,
+      lastUsedBgColor,
+      lastUsedFontColor,
+      note
+    ) {
       // schema
-      const obj = new Object();
       const currentDate = Date.now();
-      obj[uuid] = {
-        text: text,
-        url: url,
-        date: currentDate,
-      };
 
-      await chrome.storage.local.set(obj);
+      if (chrome.storage) {
+        await chrome.storage.local.set({
+          [uuid]: {
+            text: text,
+            url: url,
+            date: currentDate,
+            bgColor: lastUsedBgColor,
+            fontColor: lastUsedFontColor,
+            note,
+          },
+        });
+      }
     }
 
-    const shadowRootElementStyle = `
-<style>
-:root {
---main-bg-color: #313337;
-}
+    async function updateNoteContent(uuid, note) {
+      const oldRecord = await chrome.storage.local.get([uuid]);
+      const oldEntries = Object.entries(oldRecord)[0][1];
 
-.myspan {
-/* color: yellow; */
-background: #00ffd9;
-/* text-decoration: line-through; */
-cursor: pointer;
-padding: 0 4px;
-}
+      // saving the new record
+      await chrome.storage.local.set({
+        [uuid]: {
+          text: oldEntries.text,
+          url: oldEntries.url,
+          date: oldEntries.date,
+          bgColor: oldEntries.bgColor,
+          fontColor: oldEntries.fontColor,
+          note: note,
+        },
+      });
+    }
 
-button {
-user-select: none;
-}
+    async function updateBgColor(uuid, color) {
+      const oldRecord = await chrome.storage.local.get([uuid]);
+      const oldEntries = Object.entries(oldRecord)[0][1];
 
-body {
-/* position: relative; */
-/* we disabled it because of youtube fullscreen player  */
-}
+      // saving the new record
+      await chrome.storage.local.set({
+        [uuid]: {
+          text: oldEntries.text,
+          url: oldEntries.url,
+          date: oldEntries.date,
+          bgColor: color,
+          fontColor: oldEntries.fontColor,
+          note: oldEntries.note,
+        },
+      });
+    }
+    async function updateFontColor(uuid, color) {
+      const oldRecord = await chrome.storage.local.get([uuid]);
+      const oldEntries = Object.entries(oldRecord)[0][1];
 
-.control-box {
-/* border: 2px dashed blue; */
-background-color: var(--main-bg-color);
-position: absolute;
-z-index: 100000;
-padding: 5px;
-display: block;
-border-radius: 15px;
-/* width: 260px; */
-}
-
-.show {
-display: block;
-}
-
-.arrow-up-icon {
-width: 0px;
-height: 0px;
-/* background: red; */
-border-left: 15px solid transparent;
-border-right: 15px solid transparent;
-border-bottom: 15px solid var(--main-bg-color);
-display: block;
-}
-
-.unwrap-btn {
-padding: 3px 10px;
-margin: 4px 0px;
-}
-
-.close-btn {
-margin-left: 10px;
-float: right;
-
-}
-
-.highlight-option {
-width: 30px;
-height: 30px;
-border-radius: 50%;
-margin: 0 3px;
-border: none;
-}
-
-.highlight-option:focus {
-border: 2px solid white;
-}
-
-.highlight-icon,
-.font-icon {
-padding: 2px;
-width: 20px;
-
-overflow: hidden;
-}
-
-.highlight-icon img,
-.font-icon img {
-width: 100%;
-}
-textarea {
-width : 150px;
-}
-
-.highlighting-section , .font-section {
-
-display: flex;
-margin-top : 10px;
-
-
-}
-
-.unwrap-section {
-border-bottom : 1px solid gray;
-}
-
-.notes-section {
-
-padding : 3px;
-display: flex;
-justify-content : space-between;
-}
-.notes-section textarea {
-width : 200px;
-height: 50px;
-margin : 0 4px;
-}
-
-.notes-section select {
-align-self: end;  
-padding : 4px;
-}
-</style>`;
+      // saving the new record
+      await chrome.storage.local.set({
+        [uuid]: {
+          text: oldEntries.text,
+          url: oldEntries.url,
+          date: oldEntries.date,
+          bgColor: oldEntries.bgColor,
+          fontColor: color,
+          note: oldEntries.note,
+        },
+      });
+    }
+    async function getFoldersList() {
+      const list = await chrome.storage.sync.get(["Folders"]);
+      return list;
+    }
 
     function unwrap(el) {
       const pp = el.parentNode;
@@ -160,32 +270,8 @@ padding : 4px;
       }
     }
 
-    // GLOBAL VARIABLES
-    let selObj = undefined;
-    let range = undefined;
-    let controlBoxIsShown = false;
-    const CONTROL_BOX_WIDTH = 200;
-    const pageBody = _el("body");
-
-    const shadowRootContainer = document.createElement("div");
-    shadowRootContainer.classList.add("shadow-root-container");
-    pageBody.insertBefore(shadowRootContainer, pageBody.firstChild);
-    const myNewRoot = shadowRootContainer.attachShadow({
-      mode: "closed",
-    });
-
-    myNewRoot.innerHTML = shadowRootElementStyle;
-
-    // adding highlight image
-    const highlightImg = document.createElement("img");
-    highlightImg.src = chrome.runtime.getURL("highlighter.png");
-    // font icon img
-    const fontImg = document.createElement("img");
-    fontImg.src = chrome.runtime.getURL("text.png");
-
     // CONTROL BOX COMPONENT
-
-    function createControlBox(
+    async function createControlBox(
       posX,
       posY,
       highlightingPallete,
@@ -239,9 +325,19 @@ padding : 4px;
         btn.classList.add("highlight-option");
         btn.style.background = value;
         highlightingSection.appendChild(btn);
-        btn.addEventListener("click", (e) => {
-          // e.stopPropagation();
-          currentSelect.style.background = value;
+        btn.addEventListener("click", async (e) => {
+          const UUID = currentSelect.dataset.uuid;
+          lastUsedBgColor = value;
+          await updateBgColor(UUID, value);
+          await updateLastUsedBgColor(value);
+          console.log(UUID);
+          const handleBgElements = document.querySelectorAll(
+            `span[data-uuid="${UUID}"]`
+          );
+
+          handleBgElements.forEach((ele) => {
+            ele.style.background = value;
+          });
         });
       });
 
@@ -262,9 +358,19 @@ padding : 4px;
         btn.style.background = value;
         btn.classList.add("highlight-option");
         fontSection.appendChild(btn);
-        btn.addEventListener("click", (e) => {
-          // e.stopPropagation();
-          currentSelect.style.color = value;
+        btn.addEventListener("click", async (e) => {
+          const UUID = currentSelect.dataset.uuid;
+          lastUsedFontColor = value;
+          console.log(UUID);
+          await updateFontColor(UUID, value);
+          await updateLastUsedFontColor(value);
+          const handFontElements = document.querySelectorAll(
+            `span[data-uuid="${UUID}"]`
+          );
+
+          handFontElements.forEach((ele) => {
+            ele.style.color = value;
+          });
         });
       });
 
@@ -279,7 +385,7 @@ padding : 4px;
       unwrapBtn.classList.add("unwrap-btn");
       unwrapSection.appendChild(unwrapBtn);
 
-      unwrapBtn.addEventListener("click", (e) => {
+      unwrapBtn.addEventListener("click", async (e) => {
         e.stopPropagation();
         // check if we unwrap a big text fragment
         const fragUUID = currentSelect.dataset.uuid;
@@ -287,20 +393,14 @@ padding : 4px;
           `span[data-uuid="${fragUUID}"]`
         );
 
-        if (allfragments.length == 1) {
-          unwrap(currentSelect);
-        } else {
-          allfragments.forEach((ele) => {
-            unwrap(ele);
-          });
-        }
+        allfragments.forEach((ele) => unwrap(ele));
         controlBox.remove();
         // make it invisble
         controlBoxIsShown = false;
         // delete it from local storge
         if (chrome.storage) {
-          // console.log(currentSelect.dataset.uuid);
-          chrome.storage.local.remove([currentSelect.dataset.uuid]);
+          await chrome.storage.local.remove([currentSelect.dataset.uuid]);
+          // remove from all folders
         }
       });
 
@@ -311,26 +411,56 @@ padding : 4px;
       notesSection.classList.add("notes-section");
       const textarea = document.createElement("textarea");
       textarea.placeholder = "Write Some Notes...";
-      // textarea.value = currentSelect.dataset.notes;
+      textarea.value = currentSelect.dataset.notes;
       notesSection.appendChild(textarea);
-      textarea.addEventListener("click", (e) => {
-        // e.stopPropagation();
-      });
-      textarea.addEventListener("input", (e) => {
+
+      textarea.addEventListener("input", async (e) => {
         e.stopPropagation();
-        currentSelect.dataset.notes = textarea.value;
+        // console.log(e.target.value);
+        const UUID = currentSelect.dataset.uuid;
+        const handleNotesAll = document.querySelectorAll(
+          `span[data-uuid="${UUID}"]`
+        );
+        handleNotesAll.forEach((ele) => (ele.dataset.notes = e.target.value));
+
+        // update notes content on chrome storage
+        await updateNoteContent(UUID, e.target.value);
       });
 
-      //------------- folder options
+      //------------- folder options-----------------
+
       const folderOptions = document.createElement("select");
       const option1 = document.createElement("option");
-      option1.value = "folder 1";
-      option1.textContent = "folder 1";
+
+      // don't save option
+      option1.textContent = "Don't save";
+      option1.value = "0"; // you can't name a folder 0
       folderOptions.appendChild(option1);
       notesSection.appendChild(folderOptions);
 
-      folderOptions.addEventListener("change", () => {
-        console.log(folderOptions.value);
+      // folders list from database
+      const foldersList = await getFoldersList();
+
+      if (Object.entries(foldersList).length > 0) {
+        // render the list of folders
+        const foldersEntries = Object.entries(foldersList)[0][1];
+
+        foldersEntries.forEach((folder) => {
+          const option = document.createElement("option");
+          option.textContent = folder.name;
+          option.value = folder.name;
+
+          folderOptions.appendChild(option);
+        });
+
+        console.log(foldersList);
+      }
+
+      folderOptions.addEventListener("input", (e) => {
+        // remove the highlighted text from database if user choose 'don't save'
+        console.log(e.target.selectedIndex);
+        console.log(e.target.value);
+        // Add the note to folder
       });
 
       controlBox.appendChild(notesSection);
@@ -345,29 +475,45 @@ padding : 4px;
       }
     });
 
+    function wrapHighlightedText(range, uuid) {
+      // it does not save anything to database
+      const wrapper_highlight = document.createElement("span");
+      wrapper_highlight.classList.add("myspan");
+      wrapper_highlight.style.color = lastUsedFontColor;
+      wrapper_highlight.style.background = lastUsedBgColor;
+      wrapper_highlight.dataset.notes = "";
+      // add the uuid here
+      wrapper_highlight.dataset.uuid = uuid;
+      range.surroundContents(wrapper_highlight);
+    }
     document.addEventListener("keypress", (e) => {
       if (e.code == "KeyH") {
-        const wrapper_highlight = document.createElement("span");
-        wrapper_highlight.classList.add("myspan");
-        wrapper_highlight.dataset.notes = "Add Notes";
-        // add the uuid here
         const uuid = crypto.randomUUID();
-        wrapper_highlight.dataset.uuid = uuid;
+
         if (range) {
           const isSafeRange = range.startContainer === range.endContainer;
-
           if (isSafeRange && !range.collapsed) {
             //-------- Stop it from adding new spans
             if (range.startContainer.nodeName == "#text") {
-              saveHighlights(range.toString(), window.location.href, uuid);
+              // save on database
+              const note = "";
+              saveHighlights(
+                range.toString(),
+                window.location.href,
+                uuid,
+                lastUsedBgColor,
+                lastUsedFontColor,
+                note
+              );
 
-              range.surroundContents(wrapper_highlight);
-              selObj.removeAllRanges();
+              wrapHighlightedText(range, uuid); // it affects the current dom
+              selObj.removeAllRanges(); // to remove the blue selection
+              range = null;
             }
-          } else {
+          } else if (!range.collapsed) {
             // not safe range
-            console.log("highlight bigger fragment");
             handleBigRange(range, uuid);
+            range = null; // to prevent adding multiple surrounds
           }
         }
       }
@@ -376,7 +522,6 @@ padding : 4px;
     function handleBigRange(range, uuid) {
       let wholeTextFragments = "";
       let safeRanges = getSafeRanges(range);
-      // console.log(safeRanges)
       for (let i = 0; i < safeRanges.length; i++) {
         if (
           !safeRanges[i].collapsed &&
@@ -384,17 +529,22 @@ padding : 4px;
           range.endContainer.nodeName == "#text" &&
           safeRanges[i].toString().match(/\w+/g) !== null
         ) {
-          const newNode = document.createElement("span");
-          newNode.dataset.uuid = uuid;
-          newNode.classList.add("myspan");
-          newNode.dataset.notes = "Add Notes";
-          safeRanges[i].surroundContents(newNode);
+          console.log(safeRanges[i]);
+          wrapHighlightedText(safeRanges[i], uuid);
           wholeTextFragments += safeRanges[i].toString();
         }
       }
 
-      console.log(wholeTextFragments);
-      saveHighlights(wholeTextFragments, window.location.href, uuid);
+      // console.log(wholeTextFragments);
+      const note = "";
+      saveHighlights(
+        wholeTextFragments,
+        window.location.href,
+        uuid,
+        lastUsedBgColor,
+        lastUsedFontColor,
+        note
+      );
       selObj.removeAllRanges();
     }
 

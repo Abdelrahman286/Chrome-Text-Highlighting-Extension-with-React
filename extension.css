@@ -4,10 +4,11 @@
 
 .myspan {
   /* color: yellow; */
-  background: rgb(164, 26, 26);
+  /* background: rgb(199, 251, 41); */
   /* text-decoration: line-through; */
   cursor: pointer;
-  padding: 0 4px;
+  /* padding: 0 2px; */
+  display: inline-block;
 }
 
 button {
@@ -78,3 +79,4 @@ body {
 .font-icon img {
   width: 100%;
 }
+
