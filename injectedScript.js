@@ -163,10 +163,13 @@ if (typeof initExtension == "undefined") {
       "LAST_USED_BG_COLOR",
     ]);
 
+    const lastUsedFolderObj = await chrome.storage.sync.get([
+      "LAST_USED_FOLDER",
+    ]);
+
     let lastUsedBgColor = Object.entries(lastUsedBgColorObj)[0][1];
     let lastUsedFontColor = Object.entries(lastUsedFontColorObj)[0][1];
-
-    console.log(lastUsedBgColor, lastUsedFontColor);
+    let lastUsedFolder = Object.entries(lastUsedFolderObj)[0][1];
 
     async function updateLastUsedBgColor(color) {
       await chrome.storage.sync.set({ LAST_USED_BG_COLOR: color });
@@ -202,6 +205,11 @@ if (typeof initExtension == "undefined") {
             note,
           },
         });
+      }
+
+      // save inside a folder
+      if (lastUsedFolder !== "0") {
+        saveNoteInFolder(uuid, lastUsedFolder);
       }
     }
 
@@ -254,10 +262,6 @@ if (typeof initExtension == "undefined") {
         },
       });
     }
-    async function getFoldersList() {
-      const list = await chrome.storage.sync.get(["Folders"]);
-      return list;
-    }
 
     function unwrap(el) {
       const pp = el.parentNode;
@@ -268,6 +272,63 @@ if (typeof initExtension == "undefined") {
         el.remove();
         pp.normalize();
       }
+    }
+
+    //------------- Handling Folders functions
+
+    async function getFoldersList() {
+      const list = await chrome.storage.sync.get(["Folders"]);
+      if (Object.entries(list).length > 0) {
+        return Object.entries(list)[0][1];
+      } else {
+        return [];
+      }
+    }
+
+    async function deleteFromAllFolders(uuid) {
+      const folderList = await getFoldersList();
+      // the note will be inside only one folder
+      const newFolders = [];
+
+      folderList.forEach((folder) => {
+        if (folder.content.includes(uuid)) {
+          const newFolderObj = {
+            name: folder.name,
+            content: folder.content.filter((id) => id !== uuid),
+          };
+
+          newFolders.push(newFolderObj);
+        } else {
+          newFolders.push(folder);
+        }
+      });
+
+      await chrome.storage.sync.set({ Folders: newFolders });
+    }
+
+    async function saveNoteInFolder(uuid, folderName) {
+      const folderList = await getFoldersList();
+      // the note will be inside only one folder
+      const newFolders = [];
+
+      folderList.forEach((folder) => {
+        if (folder.name === folderName) {
+          const newFolderObj = {
+            name: folder.name,
+            content: [...folder.content, uuid],
+          };
+
+          newFolders.push(newFolderObj);
+        } else {
+          newFolders.push(folder);
+        }
+      });
+
+      await chrome.storage.sync.set({ Folders: newFolders });
+    }
+
+    async function updateLastUsedFolder(folderName) {
+      await chrome.storage.sync.set({ LAST_USED_FOLDER: folderName });
     }
 
     // CONTROL BOX COMPONENT
@@ -330,7 +391,7 @@ if (typeof initExtension == "undefined") {
           lastUsedBgColor = value;
           await updateBgColor(UUID, value);
           await updateLastUsedBgColor(value);
-          console.log(UUID);
+          // console.log(UUID);
           const handleBgElements = document.querySelectorAll(
             `span[data-uuid="${UUID}"]`
           );
@@ -361,7 +422,7 @@ if (typeof initExtension == "undefined") {
         btn.addEventListener("click", async (e) => {
           const UUID = currentSelect.dataset.uuid;
           lastUsedFontColor = value;
-          console.log(UUID);
+          // console.log(UUID);
           await updateFontColor(UUID, value);
           await updateLastUsedFontColor(value);
           const handFontElements = document.querySelectorAll(
@@ -401,6 +462,7 @@ if (typeof initExtension == "undefined") {
         if (chrome.storage) {
           await chrome.storage.local.remove([currentSelect.dataset.uuid]);
           // remove from all folders
+          deleteFromAllFolders([currentSelect.dataset.uuid]);
         }
       });
 
@@ -441,26 +503,28 @@ if (typeof initExtension == "undefined") {
       // folders list from database
       const foldersList = await getFoldersList();
 
-      if (Object.entries(foldersList).length > 0) {
-        // render the list of folders
-        const foldersEntries = Object.entries(foldersList)[0][1];
-
-        foldersEntries.forEach((folder) => {
+      if (foldersList) {
+        foldersList.forEach((folder) => {
           const option = document.createElement("option");
           option.textContent = folder.name;
           option.value = folder.name;
-
           folderOptions.appendChild(option);
         });
-
-        console.log(foldersList);
       }
 
-      folderOptions.addEventListener("input", (e) => {
-        // remove the highlighted text from database if user choose 'don't save'
-        console.log(e.target.selectedIndex);
-        console.log(e.target.value);
-        // Add the note to folder
+      folderOptions.value = lastUsedFolder;
+
+      folderOptions.addEventListener("input", async (e) => {
+        lastUsedFolder = e.target.value;
+        // update lastUsedFolder
+        updateLastUsedFolder(e.target.value);
+        deleteFromAllFolders(currentSelect.dataset.uuid);
+
+        if (e.target.value === "0") {
+          await chrome.storage.local.remove([currentSelect.dataset.uuid]);
+        } else {
+          saveNoteInFolder(currentSelect.dataset.uuid, e.target.value);
+        }
       });
 
       controlBox.appendChild(notesSection);
@@ -529,7 +593,7 @@ if (typeof initExtension == "undefined") {
           range.endContainer.nodeName == "#text" &&
           safeRanges[i].toString().match(/\w+/g) !== null
         ) {
-          console.log(safeRanges[i]);
+          // console.log(safeRanges[i]);
           wrapHighlightedText(safeRanges[i], uuid);
           wholeTextFragments += safeRanges[i].toString();
         }
