@@ -35,7 +35,7 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
 
       // js file
       chrome.scripting.executeScript({
-        files: ["injectedScript.js"],
+        files: ["contentScript.js"],
         target: { tabId: tab.id },
       });
     }
@@ -46,6 +46,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   // details.reason = install || update
 
   // FOLDER INIT
+
   const foldersList = await chrome.storage.sync.get(["Folders"]);
   const foldersCount = Object.entries(foldersList).length;
 
@@ -65,24 +66,23 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     await chrome.storage.sync.set({ Folders: [folder, folder2] });
   }
 
-  // LAST USED SETTING INIT
-  // const LAST_USED_FONT_COLOR = await chrome.storage.sync.get([
-  //   "LAST_USED_FONT_COLOR",
-  // ]);
-
-  // const LAST_USED_BG_COLOR = await chrome.storage.sync.get([
-  //   "LAST_USED_BG_COLOR",
-  // ]);
-
-  // const LAST_USED_FOLDER = await chrome.storage.sync.get(["LAST_USED_FOLDER"]);
-
   await chrome.storage.sync.set({ LAST_USED_FONT_COLOR: "black" });
-
   await chrome.storage.sync.set({ LAST_USED_BG_COLOR: "yellow" });
-
   await chrome.storage.sync.set({ LAST_USED_FOLDER: "0" });
 
-  let lastUsedBgColor = await chrome.storage.sync.get(["LAST_USED_FONT_COLOR"]);
-
-  // console.log(Object.entries(lastUsedBgColor)[0][1]);
+  // set default highlight colors , font colors , shortcut settings
+  await chrome.storage.sync.set({
+    HIGHLIGHT_COLORS: ["#fcf151", "#b581fe", "#83f18d", "#67dfff", "#ff659f"],
+  });
+  await chrome.storage.sync.set({
+    FONT_COLORS: [" black", "#23212d", "white"],
+  });
+  await chrome.storage.sync.set({
+    SHORTCUT_CONFIG: {
+      h: true,
+      ctrl: false,
+      alt: false,
+      shift: false,
+    },
+  });
 });

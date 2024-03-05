@@ -133,20 +133,24 @@ if (typeof initExtension == "undefined") {
     myNewRoot.innerHTML = shadowRootElementStyle;
 
     // colors
-    const highlightingPallete = [
-      { name: "white", value: "white" },
-      { name: "black", value: "black" },
-      { name: "red", value: "#ff0000" },
-      { name: "green", value: "#f8ff00" },
-      { name: "blue", value: "#a41a1a" },
-      { name: "yellow", value: "#10ff00" },
-      { name: "purple", value: "#00ffd9" },
-    ];
+    const highlightColorsObj = await chrome.storage.sync.get([
+      "HIGHLIGHT_COLORS",
+    ]);
+    const fontColorsObj = await chrome.storage.sync.get(["FONT_COLORS"]);
+    const shortcutConfigObj = await chrome.storage.sync.get([
+      "SHORTCUT_CONFIG",
+    ]);
 
-    const fontPallete = [
-      { name: "white", value: "white" },
-      { name: "black", value: "black" },
-    ];
+    const highlightingPallete =
+      Object.entries(highlightColorsObj).length !== 0
+        ? Object.entries(highlightColorsObj)[0][1]
+        : [];
+    const fontPallete =
+      Object.entries(fontColorsObj).length !== 0
+        ? Object.entries(fontColorsObj)[0][1]
+        : [];
+
+    const shortcutConfig = Object.entries(shortcutConfigObj)[0][1];
 
     // adding highlight image
     const highlightImg = document.createElement("img");
@@ -191,30 +195,31 @@ if (typeof initExtension == "undefined") {
       lastUsedFontColor,
       note
     ) {
-      // schema
-      const currentDate = Date.now();
-
-      if (chrome.storage) {
-        await chrome.storage.local.set({
-          [uuid]: {
-            text: text,
-            url: url,
-            date: currentDate,
-            bgColor: lastUsedBgColor,
-            fontColor: lastUsedFontColor,
-            note,
-          },
-        });
-      }
-
       // save inside a folder
       if (lastUsedFolder !== "0") {
+        console.log(lastUsedFolder);
+        // save in local storage
+        const currentDate = Date.now();
+        if (chrome.storage) {
+          await chrome.storage.local.set({
+            [uuid]: {
+              text: text,
+              url: url,
+              date: currentDate,
+              bgColor: lastUsedBgColor,
+              fontColor: lastUsedFontColor,
+              note,
+            },
+          });
+        }
+        // save in selected folder
         saveNoteInFolder(uuid, lastUsedFolder);
       }
     }
 
     async function updateNoteContent(uuid, note) {
       const oldRecord = await chrome.storage.local.get([uuid]);
+      if (Object.entries(oldRecord).length == 0) return;
       const oldEntries = Object.entries(oldRecord)[0][1];
 
       // saving the new record
@@ -232,6 +237,7 @@ if (typeof initExtension == "undefined") {
 
     async function updateBgColor(uuid, color) {
       const oldRecord = await chrome.storage.local.get([uuid]);
+      if (Object.entries(oldRecord).length == 0) return;
       const oldEntries = Object.entries(oldRecord)[0][1];
 
       // saving the new record
@@ -248,6 +254,7 @@ if (typeof initExtension == "undefined") {
     }
     async function updateFontColor(uuid, color) {
       const oldRecord = await chrome.storage.local.get([uuid]);
+      if (Object.entries(oldRecord).length == 0) return;
       const oldEntries = Object.entries(oldRecord)[0][1];
 
       // saving the new record
@@ -380,8 +387,7 @@ if (typeof initExtension == "undefined") {
       highlightIcon.appendChild(highlightImg);
       highlightingSection.appendChild(highlightIcon);
       highlightingPallete.forEach((ele) => {
-        const name = ele.name;
-        const value = ele.value;
+        const value = ele;
         const btn = document.createElement("button");
         btn.classList.add("highlight-option");
         btn.style.background = value;
@@ -413,8 +419,7 @@ if (typeof initExtension == "undefined") {
       fontSection.appendChild(fontIcon);
       // ------ font-color
       fontPallete.forEach((ele) => {
-        const name = ele.name;
-        const value = ele.value;
+        const value = ele;
         const btn = document.createElement("button");
         btn.style.background = value;
         btn.classList.add("highlight-option");
@@ -515,6 +520,8 @@ if (typeof initExtension == "undefined") {
       folderOptions.value = lastUsedFolder;
 
       folderOptions.addEventListener("input", async (e) => {
+        controlBox.remove();
+        controlBoxIsShown = false;
         lastUsedFolder = e.target.value;
         // update lastUsedFolder
         updateLastUsedFolder(e.target.value);
@@ -523,6 +530,24 @@ if (typeof initExtension == "undefined") {
         if (e.target.value === "0") {
           await chrome.storage.local.remove([currentSelect.dataset.uuid]);
         } else {
+          // save not in local storage (override)
+          let wholeText = "";
+          document
+            .querySelectorAll(`span[data-uuid="${currentSelect.dataset.uuid}"]`)
+            .forEach((ele) => {
+              wholeText += ele.textContent;
+            });
+          // console.log(wholeText);
+          saveHighlights(
+            wholeText,
+            window.location.href,
+            currentSelect.dataset.uuid,
+            currentSelect.style.background,
+            currentSelect.style.color,
+            currentSelect.dataset.note
+          );
+
+          // save UUID key in folder
           saveNoteInFolder(currentSelect.dataset.uuid, e.target.value);
         }
       });
@@ -539,6 +564,10 @@ if (typeof initExtension == "undefined") {
       }
     });
 
+    function isBlank(str) {
+      return !str || /^\s*$/.test(str);
+    }
+
     function wrapHighlightedText(range, uuid) {
       // it does not save anything to database
       const wrapper_highlight = document.createElement("span");
@@ -551,12 +580,17 @@ if (typeof initExtension == "undefined") {
       range.surroundContents(wrapper_highlight);
     }
     document.addEventListener("keypress", (e) => {
-      if (e.code == "KeyH") {
+      if (
+        e.code == "KeyH" &&
+        e.shiftKey == shortcutConfig["shift"] &&
+        e.ctrlKey == shortcutConfig["ctrl"] &&
+        e.altKey == shortcutConfig["alt"]
+      ) {
         const uuid = crypto.randomUUID();
 
         if (range) {
           const isSafeRange = range.startContainer === range.endContainer;
-          if (isSafeRange && !range.collapsed) {
+          if (isSafeRange && !range.collapsed && !isBlank(range.toString())) {
             //-------- Stop it from adding new spans
             if (range.startContainer.nodeName == "#text") {
               // save on database
@@ -591,7 +625,8 @@ if (typeof initExtension == "undefined") {
           !safeRanges[i].collapsed &&
           range.startContainer.nodeName == "#text" &&
           range.endContainer.nodeName == "#text" &&
-          safeRanges[i].toString().match(/\w+/g) !== null
+          safeRanges[i].toString().match(/\w+/g) !== null &&
+          !isBlank(range.toString())
         ) {
           // console.log(safeRanges[i]);
           wrapHighlightedText(safeRanges[i], uuid);
@@ -600,16 +635,19 @@ if (typeof initExtension == "undefined") {
       }
 
       // console.log(wholeTextFragments);
-      const note = "";
-      saveHighlights(
-        wholeTextFragments,
-        window.location.href,
-        uuid,
-        lastUsedBgColor,
-        lastUsedFontColor,
-        note
-      );
-      selObj.removeAllRanges();
+      if (!isBlank(wholeTextFragments)) {
+        const note = "";
+
+        saveHighlights(
+          wholeTextFragments,
+          window.location.href,
+          uuid,
+          lastUsedBgColor,
+          lastUsedFontColor,
+          note
+        );
+        selObj.removeAllRanges();
+      }
     }
 
     // ------------------- THIS IS THE ONLY FUNCTION I STOLE

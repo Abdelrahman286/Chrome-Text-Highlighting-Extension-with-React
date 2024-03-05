@@ -16,7 +16,7 @@
       "48": "icon.png",
       "128": "icon.png"
     },
-    "default_popup": "popup.html"
+    "default_popup": "./popup/index.html"
   },
   "background": {
     "service_worker": "background.js"
@@ -30,5 +30,5 @@
     }
   ],
 
-  "options_page": "options.html"
+  "options_page": "./index.html"
 }
