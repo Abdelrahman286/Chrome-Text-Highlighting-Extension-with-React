@@ -139,15 +139,10 @@ const Folders = ({ popup }) => {
           </div>
         )}
 
-        {!popup && (
-          <div
-            className="add-folder"
-            onClick={() => setIsAddFolderVisible(true)}
-          >
-            Add
-            <FaFolderPlus></FaFolderPlus>
-          </div>
-        )}
+        <div className="add-folder" onClick={() => setIsAddFolderVisible(true)}>
+          Add
+          <FaFolderPlus></FaFolderPlus>
+        </div>
 
         <div className="folder-names">{renderedFoldersList}</div>
       </div>

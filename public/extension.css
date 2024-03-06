@@ -3,32 +3,21 @@
 }
 
 .myspan {
-  /* color: yellow; */
-  /* background: rgb(199, 251, 41); */
-  /* text-decoration: line-through; */
   cursor: pointer;
-  /* padding: 0 2px; */
-  display: inline-block;
+  /* display: inline-block; */
 }
 
 button {
   user-select: none;
 }
 
-body {
-  /* position: relative; */
-  /* we disabled it because of youtube fullscreen player  */
-}
-
 .control-box {
-  /* border: 2px dashed blue; */
   background-color: var(--main-bg-color);
   position: fixed;
   z-index: 100000;
   padding: 5px;
   display: block;
   border-radius: 15px;
-  /* width: 260px; */
 }
 
 .show {
@@ -38,7 +27,7 @@ body {
 .arrow-up-icon {
   width: 0px;
   height: 0px;
-  /* background: red; */
+
   border-left: 15px solid transparent;
   border-right: 15px solid transparent;
   border-bottom: 15px solid var(--main-bg-color);

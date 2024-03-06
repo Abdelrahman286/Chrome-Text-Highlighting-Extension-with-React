@@ -68,6 +68,7 @@ aside span svg {
 
 .folder-tab {
   display: flex;
+  background: white;
 }
 .folders-list {
   padding-left: 10px;

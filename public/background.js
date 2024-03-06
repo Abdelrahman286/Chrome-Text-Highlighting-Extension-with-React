@@ -20,24 +20,26 @@ function checkList(url) {
   return res;
 }
 
-chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status == "complete") {
-    blocked = checkList(tab.url);
-
-    if (blocked) {
+    if (checkList(tab.url)) {
       return;
     } else {
       // css file
-      chrome.scripting.insertCSS({
-        files: ["extension.css"],
-        target: { tabId: tab.id },
-      });
+      try {
+        await chrome.scripting.insertCSS({
+          files: ["extension.css"],
+          target: { tabId: tab.id },
+        });
 
-      // js file
-      chrome.scripting.executeScript({
-        files: ["contentScript.js"],
-        target: { tabId: tab.id },
-      });
+        // js file
+        await chrome.scripting.executeScript({
+          files: ["contentScript.js"],
+          target: { tabId: tab.id },
+        });
+      } catch (e) {
+        console.log(e);
+      }
     }
   }
 });

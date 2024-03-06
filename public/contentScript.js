@@ -13,6 +13,7 @@ if (typeof initExtension == "undefined") {
     /* text-decoration: line-through; */
     cursor: pointer;
     padding: 0 4px;
+    
     }
 
     button {
@@ -477,7 +478,9 @@ if (typeof initExtension == "undefined") {
       const notesSection = document.createElement("div");
       notesSection.classList.add("notes-section");
       const textarea = document.createElement("textarea");
-      textarea.placeholder = "Write Some Notes...";
+      textarea.placeholder = "Write Notes...";
+      textarea.style.height = "30px";
+      textarea.style.padding = "6px";
       textarea.value = currentSelect.dataset.notes;
       notesSection.appendChild(textarea);
 
