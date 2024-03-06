@@ -155,8 +155,8 @@ if (typeof initExtension == "undefined") {
 
     // adding highlight image
     const highlightImg = document.createElement("img");
-    highlightImg.src = chrome.runtime.getURL("highlighter.png");
     const fontImg = document.createElement("img");
+    highlightImg.src = chrome.runtime.getURL("highlighter.png");
     fontImg.src = chrome.runtime.getURL("text.png");
 
     // LAST USED CONFIG
@@ -375,8 +375,8 @@ if (typeof initExtension == "undefined") {
       closeBtn.addEventListener("click", (e) => {
         // e.stopPropagation();
 
-        controlBox.remove();
         controlBoxIsShown = false;
+        controlBox.remove();
       });
 
       //-------------- Highlighting section -------------------------------
@@ -523,8 +523,6 @@ if (typeof initExtension == "undefined") {
       folderOptions.value = lastUsedFolder;
 
       folderOptions.addEventListener("input", async (e) => {
-        controlBox.remove();
-        controlBoxIsShown = false;
         lastUsedFolder = e.target.value;
         // update lastUsedFolder
         updateLastUsedFolder(e.target.value);
@@ -553,6 +551,8 @@ if (typeof initExtension == "undefined") {
           // save UUID key in folder
           saveNoteInFolder(currentSelect.dataset.uuid, e.target.value);
         }
+        controlBox.remove();
+        controlBoxIsShown = false;
       });
 
       controlBox.appendChild(notesSection);
