@@ -5,13 +5,12 @@ const blockedwebsites = [
   "https://chrome.google.com/webstore/",
   "chrome-extension://",
   "https://chromewebstore.google.com",
-  ".google.com",
 ];
 
 function checkList(url) {
   let res;
   blockedwebsites.forEach((ele) => {
-    if (url.includes(ele)) {
+    if (url.startsWith(ele)) {
       res = true;
       return;
     }
