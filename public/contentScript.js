@@ -2,122 +2,122 @@ if (typeof initExtension == "undefined") {
   async function initExtension() {
     // shadow root element
     const shadowRootElementStyle = `
-    <style>
-    :root {
-    --main-bg-color: #313337;
-    }
-
-    .myspan {
-    /* color: yellow; */
-    background: #00ffd9;
-    /* text-decoration: line-through; */
-    cursor: pointer;
-    padding: 0 4px;
-    
-    }
-
-    button {
-    user-select: none;
-    }
-
-    body {
-    /* position: relative; */
-    /* we disabled it because of youtube fullscreen player  */
-    }
-
-    .control-box {
-    /* border: 2px dashed blue; */
-    background-color: var(--main-bg-color);
-    position: absolute;
-    z-index: 100000;
-    padding: 5px;
-    display: block;
-    border-radius: 15px;
-    /* width: 260px; */
-    }
-
-    .show {
-    display: block;
-    }
-
-    .arrow-up-icon {
-    width: 0px;
-    height: 0px;
-    /* background: red; */
-    border-left: 15px solid transparent;
-    border-right: 15px solid transparent;
-    border-bottom: 15px solid var(--main-bg-color);
-    display: block;
-    }
-
-    .unwrap-btn {
-    padding: 3px 10px;
-    margin: 4px 0px;
-    }
-
-    .close-btn {
-    margin-left: 10px;
-    float: right;
-
-    }
-
-    .highlight-option {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    margin: 0 3px;
-    border: none;
-    }
-
-    .highlight-option:focus {
-    border: 2px solid white;
-    }
-
-    .highlight-icon,
-    .font-icon {
-    padding: 2px;
-    width: 20px;
-
-    overflow: hidden;
-    }
-
-    .highlight-icon img,
-    .font-icon img {
-    width: 100%;
-    }
-    textarea {
-    width : 150px;
-    }
-
-    .highlighting-section , .font-section {
-
-    display: flex;
-    margin-top : 10px;
-
-
-    }
-
-    .unwrap-section {
-    border-bottom : 1px solid gray;
-    }
-
-    .notes-section {
-
-    padding : 3px;
-    display: flex;
-    justify-content : space-between;
-    }
-    .notes-section textarea {
-    width : 200px;
-    height: 50px;
-    margin : 0 4px;
-    }
-
-    .notes-section select {
-    align-self: end;  
-    padding : 4px;
-    }
-    </style>`;
+      <style>
+      :root {
+      --main-bg-color: #313337;
+      }
+  
+      .myspan {
+      /* color: yellow; */
+      background: #00ffd9;
+      /* text-decoration: line-through; */
+      cursor: pointer;
+      padding: 0 4px;
+      
+      }
+  
+      button {
+      user-select: none;
+      }
+  
+      body {
+      /* position: relative; */
+      /* we disabled it because of youtube fullscreen player  */
+      }
+  
+      .control-box {
+      /* border: 2px dashed blue; */
+      background-color: var(--main-bg-color);
+      position: absolute;
+      z-index: 100000;
+      padding: 5px;
+      display: block;
+      border-radius: 15px;
+      /* width: 260px; */
+      }
+  
+      .show {
+      display: block;
+      }
+  
+      .arrow-up-icon {
+      width: 0px;
+      height: 0px;
+      /* background: red; */
+      border-left: 15px solid transparent;
+      border-right: 15px solid transparent;
+      border-bottom: 15px solid var(--main-bg-color);
+      display: block;
+      }
+  
+      .unwrap-btn {
+      padding: 3px 10px;
+      margin: 4px 0px;
+      }
+  
+      .close-btn {
+      margin-left: 10px;
+      float: right;
+  
+      }
+  
+      .highlight-option {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      margin: 0 3px;
+      border: none;
+      }
+  
+      .highlight-option:focus {
+      border: 2px solid white;
+      }
+  
+      .highlight-icon,
+      .font-icon {
+      padding: 2px;
+      width: 20px;
+  
+      overflow: hidden;
+      }
+  
+      .highlight-icon img,
+      .font-icon img {
+      width: 100%;
+      }
+      textarea {
+      width : 150px;
+      }
+  
+      .highlighting-section , .font-section {
+  
+      display: flex;
+      margin-top : 10px;
+  
+  
+      }
+  
+      .unwrap-section {
+      border-bottom : 1px solid gray;
+      }
+  
+      .notes-section {
+  
+      padding : 3px;
+      display: flex;
+      justify-content : space-between;
+      }
+      .notes-section textarea {
+      width : 200px;
+      height: 50px;
+      margin : 0 4px;
+      }
+  
+      .notes-section select {
+      align-self: end;  
+      padding : 4px;
+      }
+      </style>`;
 
     function _el(selector) {
       return document.querySelector(selector);
@@ -335,6 +335,7 @@ if (typeof initExtension == "undefined") {
     }
 
     async function updateLastUsedFolder(folderName) {
+    //   console.log("set is done", folderName);
       await chrome.storage.sync.set({ LAST_USED_FOLDER: folderName });
     }
 
@@ -523,7 +524,7 @@ if (typeof initExtension == "undefined") {
 
       folderOptions.addEventListener("click", async (e) => {
         lastUsedFolder = e.target.value;
-        if (e.target.value == "0") {
+        if (lastUsedFolder == "0") {
           await deleteFromAllFolders(currentSelect.dataset.uuid);
           await chrome.storage.local.remove([currentSelect.dataset.uuid]);
         } else {
@@ -546,9 +547,9 @@ if (typeof initExtension == "undefined") {
           );
 
           // save UUID key in folder
-          await saveNoteInFolder(currentSelect.dataset.uuid, e.target.value);
+          await saveNoteInFolder(currentSelect.dataset.uuid, lastUsedFolder);
         }
-        await updateLastUsedFolder(e.target.value);
+        await updateLastUsedFolder(lastUsedFolder);
         controlBox.remove();
         controlBoxIsShown = false;
       });
