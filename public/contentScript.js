@@ -119,6 +119,9 @@ if (typeof initExtension == "undefined") {
     }
     </style>`;
 
+    function _el(selector) {
+      return document.querySelector(selector);
+    }
     // GLOBAL VARIABLES
     let selObj = undefined;
     let range = undefined;
@@ -184,10 +187,6 @@ if (typeof initExtension == "undefined") {
       await chrome.storage.sync.set({ LAST_USED_FONT_COLOR: color });
     }
 
-    function _el(selector) {
-      return document.querySelector(selector);
-    }
-
     async function saveHighlights(
       text,
       url,
@@ -214,7 +213,7 @@ if (typeof initExtension == "undefined") {
           });
         }
         // save in selected folder
-        saveNoteInFolder(uuid, lastUsedFolder);
+        await saveNoteInFolder(uuid, lastUsedFolder);
       }
     }
 
@@ -461,15 +460,15 @@ if (typeof initExtension == "undefined") {
         );
 
         allfragments.forEach((ele) => unwrap(ele));
-        controlBox.remove();
-        // make it invisble
-        controlBoxIsShown = false;
         // delete it from local storge
         if (chrome.storage) {
           await chrome.storage.local.remove([currentSelect.dataset.uuid]);
           // remove from all folders
-          deleteFromAllFolders([currentSelect.dataset.uuid]);
+          await deleteFromAllFolders([currentSelect.dataset.uuid]);
         }
+
+        controlBox.remove();
+        controlBoxIsShown = false;
       });
 
       controlBox.appendChild(unwrapSection);
@@ -525,8 +524,8 @@ if (typeof initExtension == "undefined") {
       folderOptions.addEventListener("input", async (e) => {
         lastUsedFolder = e.target.value;
         // update lastUsedFolder
-        updateLastUsedFolder(e.target.value);
-        deleteFromAllFolders(currentSelect.dataset.uuid);
+        await updateLastUsedFolder(e.target.value);
+        await deleteFromAllFolders(currentSelect.dataset.uuid);
 
         if (e.target.value === "0") {
           await chrome.storage.local.remove([currentSelect.dataset.uuid]);
@@ -539,7 +538,7 @@ if (typeof initExtension == "undefined") {
               wholeText += ele.textContent;
             });
           // console.log(wholeText);
-          saveHighlights(
+          await saveHighlights(
             wholeText,
             window.location.href,
             currentSelect.dataset.uuid,
@@ -549,7 +548,7 @@ if (typeof initExtension == "undefined") {
           );
 
           // save UUID key in folder
-          saveNoteInFolder(currentSelect.dataset.uuid, e.target.value);
+          await saveNoteInFolder(currentSelect.dataset.uuid, e.target.value);
         }
         controlBox.remove();
         controlBoxIsShown = false;
@@ -582,7 +581,8 @@ if (typeof initExtension == "undefined") {
       wrapper_highlight.dataset.uuid = uuid;
       range.surroundContents(wrapper_highlight);
     }
-    document.addEventListener("keypress", (e) => {
+
+    document.addEventListener("keypress", async (e) => {
       if (
         e.code == "KeyH" &&
         e.shiftKey == shortcutConfig["shift"] &&
@@ -598,7 +598,7 @@ if (typeof initExtension == "undefined") {
             if (range.startContainer.nodeName == "#text") {
               // save on database
               const note = "";
-              saveHighlights(
+              await saveHighlights(
                 range.toString(),
                 window.location.href,
                 uuid,
@@ -620,7 +620,7 @@ if (typeof initExtension == "undefined") {
       }
     });
 
-    function handleBigRange(range, uuid) {
+    async function handleBigRange(range, uuid) {
       let wholeTextFragments = "";
       let safeRanges = getSafeRanges(range);
       for (let i = 0; i < safeRanges.length; i++) {
@@ -641,7 +641,7 @@ if (typeof initExtension == "undefined") {
       if (!isBlank(wholeTextFragments)) {
         const note = "";
 
-        saveHighlights(
+        await saveHighlights(
           wholeTextFragments,
           window.location.href,
           uuid,
