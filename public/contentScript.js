@@ -197,7 +197,7 @@ if (typeof initExtension == "undefined") {
     ) {
       // save inside a folder
       if (lastUsedFolder !== "0") {
-        console.log(lastUsedFolder);
+        // console.log(lastUsedFolder);
         // save in local storage
         const currentDate = Date.now();
         if (chrome.storage) {
@@ -521,13 +521,10 @@ if (typeof initExtension == "undefined") {
 
       folderOptions.value = lastUsedFolder;
 
-      folderOptions.addEventListener("input", async (e) => {
+      folderOptions.addEventListener("click", async (e) => {
         lastUsedFolder = e.target.value;
-        // update lastUsedFolder
-        await updateLastUsedFolder(e.target.value);
-        await deleteFromAllFolders(currentSelect.dataset.uuid);
-
-        if (e.target.value === "0") {
+        if (e.target.value == "0") {
+          await deleteFromAllFolders(currentSelect.dataset.uuid);
           await chrome.storage.local.remove([currentSelect.dataset.uuid]);
         } else {
           // save not in local storage (override)
@@ -538,6 +535,7 @@ if (typeof initExtension == "undefined") {
               wholeText += ele.textContent;
             });
           // console.log(wholeText);
+          await deleteFromAllFolders(currentSelect.dataset.uuid);
           await saveHighlights(
             wholeText,
             window.location.href,
@@ -550,6 +548,7 @@ if (typeof initExtension == "undefined") {
           // save UUID key in folder
           await saveNoteInFolder(currentSelect.dataset.uuid, e.target.value);
         }
+        await updateLastUsedFolder(e.target.value);
         controlBox.remove();
         controlBoxIsShown = false;
       });
