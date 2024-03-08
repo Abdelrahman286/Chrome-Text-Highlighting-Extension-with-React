@@ -1,6 +1,5 @@
-Introducing "Highlighter Guru" - Your Ultimate Web Highlighting Chrome Extension!
+Introducing "Highlighter Guru" - a free and open source Text Highlighting Extension for Chrome
 
-Elevate your online research and information organization with Highlighter Guru, a powerful Chrome extension designed to enhance your web browsing experience. Say goodbye to scattered notes and tedious searches for important information – Highlighter Guru lets you effortlessly highlight text on web pages, customize the highlighting and font color, add personalized notes, and organize it all in a neatly structured folder system.
 
 ![alt text](screenshot.png)
 
