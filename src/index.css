@@ -191,12 +191,17 @@ aside span svg {
   display: flex;
   justify-content: space-between;
 }
+.note-text {
+  /* font-weight: 600; */
+  font-size: 16px;
+}
 .note-comment {
   margin-top: 6px;
   font-size: 14px;
-  color: rgba(0, 0, 0, 0.6);
+  color: rgba(0, 0, 0, 0.8);
   position: relative;
   margin-left: 30px;
+  font-weight: 500;
 }
 
 .note-comment::before {

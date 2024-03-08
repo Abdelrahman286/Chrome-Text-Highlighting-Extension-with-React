@@ -53,11 +53,15 @@ if (typeof initExtension == "undefined") {
       .unwrap-btn {
       padding: 3px 10px;
       margin: 4px 0px;
+      background : rgb(59, 59, 59);
+      color : white;
       }
   
       .close-btn {
       margin-left: 10px;
       float: right;
+      background : rgb(59, 59, 59);
+      color : white;
   
       }
   
@@ -86,7 +90,9 @@ if (typeof initExtension == "undefined") {
       width: 100%;
       }
       textarea {
-      width : 150px;
+      width : 150px; 
+      background : rgb(59, 59, 59);
+      color : white;
       }
   
       .highlighting-section , .font-section {
@@ -116,6 +122,8 @@ if (typeof initExtension == "undefined") {
       .notes-section select {
       align-self: end;  
       padding : 4px;
+      background : rgb(59, 59, 59);
+      color : white;
       }
       </style>`;
 
@@ -197,8 +205,6 @@ if (typeof initExtension == "undefined") {
     ) {
       // save inside a folder
       if (lastUsedFolder !== "0") {
-        // console.log(lastUsedFolder);
-        // save in local storage
         const currentDate = Date.now();
         if (chrome.storage) {
           await chrome.storage.local.set({
@@ -213,7 +219,7 @@ if (typeof initExtension == "undefined") {
           });
         }
         // save in selected folder
-        await saveNoteInFolder(uuid, lastUsedFolder);
+        saveNoteInFolder(uuid, lastUsedFolder);
       }
     }
 
@@ -335,7 +341,6 @@ if (typeof initExtension == "undefined") {
     }
 
     async function updateLastUsedFolder(folderName) {
-    //   console.log("set is done", folderName);
       await chrome.storage.sync.set({ LAST_USED_FOLDER: folderName });
     }
 
@@ -375,8 +380,8 @@ if (typeof initExtension == "undefined") {
       closeBtn.addEventListener("click", (e) => {
         // e.stopPropagation();
 
-        controlBoxIsShown = false;
         controlBox.remove();
+        controlBoxIsShown = false;
       });
 
       //-------------- Highlighting section -------------------------------
@@ -398,7 +403,6 @@ if (typeof initExtension == "undefined") {
           lastUsedBgColor = value;
           await updateBgColor(UUID, value);
           await updateLastUsedBgColor(value);
-          // console.log(UUID);
           const handleBgElements = document.querySelectorAll(
             `span[data-uuid="${UUID}"]`
           );
@@ -428,7 +432,6 @@ if (typeof initExtension == "undefined") {
         btn.addEventListener("click", async (e) => {
           const UUID = currentSelect.dataset.uuid;
           lastUsedFontColor = value;
-          // console.log(UUID);
           await updateFontColor(UUID, value);
           await updateLastUsedFontColor(value);
           const handFontElements = document.querySelectorAll(
@@ -452,7 +455,7 @@ if (typeof initExtension == "undefined") {
       unwrapBtn.classList.add("unwrap-btn");
       unwrapSection.appendChild(unwrapBtn);
 
-      unwrapBtn.addEventListener("click", async (e) => {
+      unwrapBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         // check if we unwrap a big text fragment
         const fragUUID = currentSelect.dataset.uuid;
@@ -462,11 +465,10 @@ if (typeof initExtension == "undefined") {
 
         allfragments.forEach((ele) => unwrap(ele));
         // delete it from local storge
-        if (chrome.storage) {
-          await chrome.storage.local.remove([currentSelect.dataset.uuid]);
-          // remove from all folders
-          await deleteFromAllFolders([currentSelect.dataset.uuid]);
-        }
+
+        chrome.storage.local.remove([currentSelect.dataset.uuid]);
+        // remove from all folders
+        deleteFromAllFolders([currentSelect.dataset.uuid]);
 
         controlBox.remove();
         controlBoxIsShown = false;
@@ -484,9 +486,8 @@ if (typeof initExtension == "undefined") {
       textarea.value = currentSelect.dataset.notes;
       notesSection.appendChild(textarea);
 
-      textarea.addEventListener("input", async (e) => {
+      textarea.addEventListener("input", (e) => {
         e.stopPropagation();
-        // console.log(e.target.value);
         const UUID = currentSelect.dataset.uuid;
         const handleNotesAll = document.querySelectorAll(
           `span[data-uuid="${UUID}"]`
@@ -494,10 +495,10 @@ if (typeof initExtension == "undefined") {
         handleNotesAll.forEach((ele) => (ele.dataset.notes = e.target.value));
 
         // update notes content on chrome storage
-        await updateNoteContent(UUID, e.target.value);
+        updateNoteContent(UUID, e.target.value);
       });
 
-      //------------- folder options-----------------
+      //------------- folder options !! -----------------
 
       const folderOptions = document.createElement("select");
       const option1 = document.createElement("option");
@@ -522,11 +523,12 @@ if (typeof initExtension == "undefined") {
 
       folderOptions.value = lastUsedFolder;
 
-      folderOptions.addEventListener("click", async (e) => {
+      folderOptions.addEventListener("change", (e) => {
+        console.log(e.target.value);
         lastUsedFolder = e.target.value;
+        deleteFromAllFolders(currentSelect.dataset.uuid);
         if (lastUsedFolder == "0") {
-          await deleteFromAllFolders(currentSelect.dataset.uuid);
-          await chrome.storage.local.remove([currentSelect.dataset.uuid]);
+          chrome.storage.local.remove([currentSelect.dataset.uuid]);
         } else {
           // save not in local storage (override)
           let wholeText = "";
@@ -535,9 +537,8 @@ if (typeof initExtension == "undefined") {
             .forEach((ele) => {
               wholeText += ele.textContent;
             });
-          // console.log(wholeText);
-          await deleteFromAllFolders(currentSelect.dataset.uuid);
-          await saveHighlights(
+
+          saveHighlights(
             wholeText,
             window.location.href,
             currentSelect.dataset.uuid,
@@ -545,11 +546,11 @@ if (typeof initExtension == "undefined") {
             currentSelect.style.color,
             currentSelect.dataset.note
           );
-
           // save UUID key in folder
-          await saveNoteInFolder(currentSelect.dataset.uuid, lastUsedFolder);
+          saveNoteInFolder(currentSelect.dataset.uuid, lastUsedFolder);
         }
-        await updateLastUsedFolder(lastUsedFolder);
+        updateLastUsedFolder(lastUsedFolder);
+
         controlBox.remove();
         controlBoxIsShown = false;
       });
@@ -631,13 +632,11 @@ if (typeof initExtension == "undefined") {
           safeRanges[i].toString().match(/\w+/g) !== null &&
           !isBlank(range.toString())
         ) {
-          // console.log(safeRanges[i]);
           wrapHighlightedText(safeRanges[i], uuid);
           wholeTextFragments += safeRanges[i].toString();
         }
       }
 
-      // console.log(wholeTextFragments);
       if (!isBlank(wholeTextFragments)) {
         const note = "";
 

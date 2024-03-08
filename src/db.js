@@ -75,6 +75,7 @@ export async function deleteFolder(folderName) {
     return ele.name !== folderName;
   });
   await chrome.storage.sync.set({ Folders: newFoldersList });
+  await chrome.storage.sync.set({ LAST_USED_FOLDER: "0" });
 }
 // [8] - rename folder
 export async function renameFolder(oldName, newName) {
@@ -107,7 +108,8 @@ export async function getFolderNotes(folderName) {
   const notesList = await chrome.storage.local.get([...UUIDs]);
   return Object.entries(notesList).sort((a, b) => {
     return b[1].date - a[1].date;
-  });p
+  });
+  p;
 }
 
 // [10] move note from folder to another one
