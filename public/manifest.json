@@ -1,6 +1,7 @@
 {
   "name": "Highlighter Guru",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "description": "Highlight and save text easily in Chrome! This extension helps you mark important stuff and store it neatly in folders for later.",
   "manifest_version": 3,
   "icons": {
     "16": "icon.png",
