@@ -3,7 +3,7 @@
 ![Highlighter Guru](screenshot.png)
 introducing "Highlighter Guru" - a free and open source Text Highlighting Extension for Chrome
 
-
+[Store Link](https://chromewebstore.google.com/detail/highlighter-guru/efikihnnclcchnlkcenaeilncbbbdmmd)
 
 ## Introduction
 
