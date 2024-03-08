@@ -2,6 +2,8 @@ Introducing "Highlighter Guru" - Your Ultimate Web Highlighting Chrome Extension
 
 Elevate your online research and information organization with Highlighter Guru, a powerful Chrome extension designed to enhance your web browsing experience. Say goodbye to scattered notes and tedious searches for important information – Highlighter Guru lets you effortlessly highlight text on web pages, customize the highlighting and font color, add personalized notes, and organize it all in a neatly structured folder system.
 
+![alt text](screenshot.png)
+
 ### ★ How to Use :
 
 1. Select the Text: Highlight the text you want to save or make note of on any web page.
