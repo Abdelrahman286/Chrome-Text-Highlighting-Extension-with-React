@@ -219,7 +219,7 @@ if (typeof initExtension == "undefined") {
           });
         }
         // save in selected folder
-        saveNoteInFolder(uuid, lastUsedFolder);
+        await saveNoteInFolder(uuid, lastUsedFolder);
       }
     }
 
