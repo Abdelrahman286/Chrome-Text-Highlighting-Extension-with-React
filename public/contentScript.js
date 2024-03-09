@@ -524,7 +524,6 @@ if (typeof initExtension == "undefined") {
       folderOptions.value = lastUsedFolder;
 
       folderOptions.addEventListener("change", (e) => {
-        console.log(e.target.value);
         lastUsedFolder = e.target.value;
         deleteFromAllFolders(currentSelect.dataset.uuid);
         if (lastUsedFolder == "0") {
