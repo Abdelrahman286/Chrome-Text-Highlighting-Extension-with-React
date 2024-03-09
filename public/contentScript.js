@@ -579,7 +579,11 @@ if (typeof initExtension == "undefined") {
       wrapper_highlight.dataset.notes = "";
       // add the uuid here
       wrapper_highlight.dataset.uuid = uuid;
-      range.surroundContents(wrapper_highlight);
+      try {
+        range.surroundContents(wrapper_highlight);
+      } catch (e) {
+        console.log(`${e} , the ${range.toString()} can not be highlighted`);
+      }
     }
 
     document.addEventListener("keypress", async (e) => {
