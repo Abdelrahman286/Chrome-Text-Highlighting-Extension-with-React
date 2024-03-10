@@ -4,7 +4,6 @@ if (
 ) {
   window.contentScriptInjected = true;
   async function initExtension() {
-    console.log("content script");
     // shadow root element
     const shadowRootElementStyle = `
       <style>
@@ -724,7 +723,7 @@ if (
       rs.push(xm);
       response = rs.concat(re);
 
-      // Send to Console
+
       return response;
     }
 

@@ -24,7 +24,6 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     } else {
       // css file
       try {
-        console.log("script added");
         await chrome.scripting.insertCSS({
           files: ["extension.css"],
           target: { tabId: tab.id },
