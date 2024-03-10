@@ -1,5 +1,3 @@
-let blocked = false;
-
 const blockedwebsites = [
   "chrome://",
   "https://chrome.google.com/webstore/",
@@ -8,7 +6,7 @@ const blockedwebsites = [
 ];
 
 function checkList(url) {
-  let res;
+  let res = false;
   blockedwebsites.forEach((ele) => {
     if (url.startsWith(ele)) {
       res = true;
@@ -26,6 +24,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     } else {
       // css file
       try {
+        console.log("script added");
         await chrome.scripting.insertCSS({
           files: ["extension.css"],
           target: { tabId: tab.id },

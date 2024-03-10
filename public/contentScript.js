@@ -1,5 +1,10 @@
-if (typeof initExtension == "undefined") {
+if (
+  typeof initExtension == "undefined" &&
+  window.contentScriptInjected !== true
+) {
+  window.contentScriptInjected = true;
   async function initExtension() {
+    console.log("content script");
     // shadow root element
     const shadowRootElementStyle = `
       <style>
